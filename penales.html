@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Penales</title>
+  <style>
+    body { background: green; text-align: center; font-family: Arial; color: white; }
+    h1 { color: yellow; }
+    #porteria {
+      width: 400px; height: 200px;
+      border: 6px solid white;
+      background: rgba(0,0,0,0.3);
+      margin: 20px auto;
+      position: relative;
+      cursor: crosshair;
+    }
+    #portero {
+      width: 50px; height: 80px;
+      background: red; border-radius: 6px;
+      position: absolute; bottom: 0; left: 175px;
+      transition: left 0.3s;
+    }
+    #balon {
+      font-size: 40px;
+      position: fixed; bottom: 60px; left: 50%;
+      transform: translateX(-50%);
+      transition: all 0.5s ease-in;
+    }
+    button {
+      padding: 10px 20px; font-size: 16px;
+      background: yellow; border: none;
+      border-radius: 6px; cursor: pointer;
+      font-weight: bold; margin: 5px;
+    }
+    #msg { font-size: 32px; color: yellow; font-weight: bold; min-height: 45px; }
+  </style>
+</head>
+<body>
+
+  <h1>⚽ Juego de Penales</h1>
+  <p id="marcador">Tú: 0 — MILAN: 0 | Penal 1/5</p>
+  <p id="msg">¡Haz clic en la portería para tirar!</p>
+
+  <div id="porteria" onclick="tirar(event)">
+    <div id="portero"></div>
+  </div>
+
+  <div id="balon">⚽</div>
+  <br>
+  <button onclick="reiniciar()">Reiniciar</button>
+
+  <script>
+    var tu = 0, cpu = 0, penal = 1, ocupado = false;
+
+    function tirar(e) {
+      if (ocupado) return;
+      ocupado = true;
+
+      var rect = document.getElementById("porteria").getBoundingClientRect();
+      var clickX = e.clientX - rect.left;
+      var clickY = e.clientY - rect.top;
+
+      // Mover balón hacia donde hizo clic
+      var b = document.getElementById("balon");
+      b.style.left = e.clientX + "px";
+      b.style.top  = (e.clientY - 80) + "px";
+      b.style.bottom = "auto";
+      b.style.transform = "none";
+
+      // Portero salta a un lado random
+      var pPos = Math.random() * 350;
+      document.getElementById("portero").style.left = pPos + "px";
+
+      // ¿Fue gol?
+      var esGol = !(clickX > pPos - 10 && clickX < pPos + 60) && clickY < 170;
+
+      setTimeout(function() {
+        if (esGol) { tu++; msg("⚽ ¡GOL!", "yellow"); }
+        else       { msg("🧤 ¡Atajado!", "orange"); }
+        marcador();
+
+        setTimeout(function() {
+          resetBalon();
+          msg("Turno MILAN...", "white");
+          setTimeout(cpuTira, 900);
+        }, 1200);
+      }, 600);
+    }
+
+    function cpuTira() {
+      var rect = document.getElementById("porteria").getBoundingClientRect();
+      var cx = rect.left + 30 + Math.random() * 340;
+      var cy = rect.top  + 20 + Math.random() * 130;
+
+      var b = document.getElementById("balon");
+      b.style.left = cx + "px";
+      b.style.top  = (cy - 60) + "px";
+      b.style.bottom = "auto";
+      b.style.transform = "none";
+
+      var pPos = Math.random() * 350;
+      document.getElementById("portero").style.left = pPos + "px";
+
+      var esGolMILAN = !((cx - rect.left) > pPos - 10 && (cx - rect.left) < pPos + 60);
+
+      setTimeout(function() {
+        if (esGolMILAN) { cpu++; msg("😱 ¡MILAN anotó!", "red"); }
+        else          { msg("✅ ¡Lo detuviste!", "lime"); }
+        marcador();
+
+        setTimeout(function() {
+          resetBalon();
+          penal++;
+          if (penal > 5) { resultado(); return; }
+          ocupado = false;
+          msg("¡Tu turno! Haz clic en la portería", "yellow");
+          marcador();
+        }, 1200);
+      }, 600);
+    }
+
+    function msg(texto, color) {
+      document.getElementById("msg").textContent = texto;
+      document.getElementById("msg").style.color = color;
+    }
+
+    function marcador() {
+      document.getElementById("marcador").textContent =
+        "Tú: " + tu + " — MILAN: " + cpu + " | Penal " + Math.min(penal, 5) + "/5";
+    }
+
+    function resetBalon() {
+      var b = document.getElementById("balon");
+      b.style.left = "50%";
+      b.style.top = "auto";
+      b.style.bottom = "60px";
+      b.style.transform = "translateX(-50%)";
+    }
+
+    function resultado() {
+      if (tu > cpu)      msg("🏆 ¡GANASTE! " + tu + " - " + cpu, "yellow");
+      else if (cpu > tu) msg("😢 Perdiste " + tu + " - " + cpu, "orange");
+      else               msg("🤝 Empate " + tu + " - " + cpu, "white");
+      ocupado = true;
+    }
+
+    function reiniciar() {
+      tu = 0; cpu = 0; penal = 1; ocupado = false;
+      document.getElementById("portero").style.left = "175px";
+      msg("¡Haz clic en la portería para tirar!", "yellow");
+      marcador();
+      resetBalon();
+    }
+  </script>
+</body>
+</html>
